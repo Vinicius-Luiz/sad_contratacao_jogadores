@@ -1,7 +1,8 @@
 from tkinter import *
+import Controller as Ctrl
 import Params as prm
 
-def get_values():
+def send_values():
     liga.showSelected()
     posicoes.to_bool()
     json = dict()
@@ -14,7 +15,8 @@ def get_values():
     json['reputacao_internacional'] = idade_nac_reputacao.inputs['REPUTACAO'].get()
     json['ligas'] = liga.ligas
     json['combo'] = combo_start.valor.get()
-    print(json)
+    Ctrl.Dataframe.send_json(json)
+
 ############################################################################
 class Root():
     def __init__(self, title = ''):
@@ -207,6 +209,17 @@ class Idade_Nacion_Reputacao():
         self.inputs['NACIONALIDADE'].set('Todos')
         self.inputs['REPUTACAO'].set('Todos')
 
+        self.paises = ['Argentina','Poland','Portugal','Brazil','Belgium','Slovenia','France','Germany','England','Korea Republic','Netherlands',
+                        'Senegal','Egypt','Italy','Spain','Uruguay','Costa Rica','Norway','Croatia','Scotland','Algeria','Slovakia','Denmark','Switzerland','Hungary','Gabon',
+                        'Serbia','Nigeria','Morocco','Sweden','Austria','Montenegro',"Côte d'Ivoire",'Mexico','Bosnia and Herzegovina','Finland','Greece','Armenia','Colombia','Cameroon','Ghana','Wales','Russia','Turkey','United States','Jamaica','Canada','Czech Republic','Chile','Ukraine',
+                        'Venezuela','Togo','Burkina Faso','Northern Ireland','Congo DR','Israel','Albania','Guinea','Iceland','China PR','New Zealand','Central African Republic','Peru','Mali','Japan','North Macedonia','Ecuador','Iran','Republic of Ireland','Angola','Romania','Mozambique',
+                        'Cape Verde Islands','Australia','Paraguay','Tunisia','Kosovo','Zimbabwe','Zambia','Libya','Suriname','Saudi Arabia','Syria','Gambia','Kenya','Georgia','Equatorial Guinea','Panama','Dominican Republic','Trinidad and Tobago','Honduras','Guinea Bissau','Liberia','Curacao','Tanzania','Benin','Cyprus','South Africa','Uzbekistan','Congo','Madagascar','Moldova','Cuba','Saint Kitts and Nevis','Philippines','Fiji','United Arab Emirates','Luxembourg','Namibia','Chad','Lithuania','Bolivia','Comoros','Thailand','Bermuda',
+                        'Burundi','Antigua and Barbuda','Malawi','Haiti','Bulgaria','Sierra Leone','Kazakhstan','Montserrat','Chinese Taipei','El Salvador','Niger','Malta','Uganda','Belarus','Jordan','India','Iraq','Puerto Rico','Azerbaijan','Mauritania',
+                        'Eritrea','Mauritius','Lebanon','Sudan','Grenada','Latvia','Guam','Kyrgyzstan','Guyana','Faroe Islands','Papua New Guinea','Ethiopia','Andorra','Korea DPR','Saint Lucia','Afghanistan','Vietnam','Belize','Guatemala','Palestine','Bhutan','Barbados','Gibraltar','Malaysia','Estonia','South Sudan','Hong Kong','Indonesia']
+        self.paises.sort()
+
+        self.reputacao = ['Muito alta', 'Alta', 'Média', 'Baixa','Muito baixa']
+
         self.frame = Frame(root, height = self.height, bg = prm.COLOR_BG)
 
         self.idadebox         = self.lbl_idade()
@@ -217,9 +230,9 @@ class Idade_Nacion_Reputacao():
         self.titleboxN    = self.title('NACIONALIDADE', 180)
         self.titleboxR    = self.title('REPUTAÇÃO INTERNACIONAL', 260)
 
-        self.opt_menuI    = self.opt_menu('IDADE',  ['Todos', '16 - 21', '22 - 27', '28 - 33', '34 - 39', '40 - 45'])
-        self.opt_menuN    = self.opt_menu('NACIONALIDADE', ['Todos']+['Brasil', 'Argentina'])
-        self.opt_menuR    = self.opt_menu('REPUTACAO',  ['Todos']+list(range(1,6)))
+        self.opt_menuI    = self.opt_menu('IDADE',  ['Todos', 'Menor que 21', '22 - 27', '28 - 33', '34 - 39', 'Maior que 40'])
+        self.opt_menuN    = self.opt_menu('NACIONALIDADE', ['Todos']+self.paises)
+        self.opt_menuR    = self.opt_menu('REPUTACAO',  ['Todos']+self.reputacao)
 
     def lbl_idade(self):
         return Label(self.frame, bg = prm.COLOR_BG)
@@ -272,6 +285,11 @@ class Liga():
     def __init__(self, root):
         self.height = 0.3
         self.ligas  = []
+        self.ligaslist = ['Todos','English Premier League','Italian Serie A','Spain Primera Division','French Ligue 1','German 1. Bundesliga','Holland Eredivisie','Portuguese Liga ZON SAGRES','Campeonato Brasileiro Série A','Paraguayan Primera División','Argentina Primera División','Ecuadorian Serie A','Scottish Premiership','Greek Super League',
+                        'Austrian Football Bundesliga','Belgian Jupiler Pro League','Mexican Liga MX','Russian Premier League','Colombian Liga Postobón','Croatian Prva HNL','English League Championship','English League One','English League Two','English National League','Italian Serie B','Spanish Segunda División','German 2. Bundesliga',
+                        'German 3. Bundesliga','French Ligue 2','Australian Hyundai A-League','Chilian Campeonato Nacional','Chinese Super League','Cypriot First Division','Czech Republic Gambrinus Liga','Danish Superliga','Finnish Veikkausliiga','Hungarian Nemzeti Bajnokság I','Indian Super League','Japanese J. League Division 1','Korean K League 1',
+                        'Liga de Fútbol Profesional Boliviano','Norwegian Eliteserien','Peruvian Primera División','Polish T-Mobile Ekstraklasa','Rep. Ireland Airtricity League','Romanian Liga I', 'Saudi Abdul L. Jameel League','South African Premier Division','Swedish Allsvenskan','Swiss Super League','Turkish Süper Lig','UAE Arabian Gulf League',
+                        'USA Major League Soccer','Ukrainian Premier League','Uruguayan Primera División','Venezuelan Primera División']
         
         self.frame = Frame(root, height = self.height, bg = prm.COLOR_BG)
 
@@ -296,18 +314,10 @@ class Liga():
             self.ligas.append(op)
 
     def pack(self):
-        self.ligalistbox.activate(0)
         self.ligatitlebox.pack(fill = X, expand = True)
         self.ligalistbox.pack(fill = X, expand = True)
-        self.ligalistbox.activate(0)
-        self.ligalistbox.insert(0, 'Todos')
-        self.ligalistbox.insert(1, 'Liga inglesa')
-        self.ligalistbox.insert(2, 'Liga espanhola')
-        self.ligalistbox.insert(3, 'Liga holandesa')
-        self.ligalistbox.insert(4, 'Liga alemã')
-        self.ligalistbox.insert(5, 'Liga italiana')
-        self.ligalistbox.insert(6, 'Liga turca')
-        self.ligalistbox.insert(7, 'Liga portuguesa')
+        for i, league in enumerate(self.ligaslist):
+            self.ligalistbox.insert(i, league)
 
         self.ligalistbox.activate(0)
         #Button(self.frame, text="Show Selected", command=self.showSelected).pack()
@@ -345,7 +355,7 @@ class Combinacoes():
         textvariable= self.valor) 
     
     def button(self):
-        return Button(self.frame, text="Pesquisar", command= lambda: get_values(),
+        return Button(self.frame, text="Pesquisar", command= lambda: send_values(),
                     width = prm.converter_pixel_chr(prm.W*0.10),
                     bg = prm.COLOR_INPUT, activeforeground = prm.COLOR_BG, fg = prm.COLOR_BG,
                     font = prm.FONT)

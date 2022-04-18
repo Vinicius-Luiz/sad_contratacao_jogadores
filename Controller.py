@@ -69,7 +69,7 @@ class Dataframe():
         self.exec_combo()
         '''
         {'metodo_pesquisa': {'metodo': 1, 'valor': 151000}, 
-        'posicao': {'GK': 0, 'CB': 0, 'RB': 0, 'LB': 0, 'CDM': 0, 'CM': 1, 'RM': 1, 'LM': 0, 'CAM': 0, 'RW': 0, 'LW': 0, 'CF': 0, 'ST': 0},
+        'posicao': 'ST'
         'idade': 'Todos', 'nacionalidade': 'Burundi', 'reputacao_internacional': 'Muito alta',
         'ligas': ['English Premier League', 'Italian Serie A'], 'combo': 1}
         '''
@@ -87,6 +87,8 @@ class Dataframe():
         return df
         
     def filtrar_posicao(self):
+        ####### MODELO DE TODOS OS FILTROS SERÁ ESSE #######
+        # filtro = df[df['player_positions'].str.contains('RWB', na=False)]
         pass
 
     def filtrar_idade(self):

@@ -9,13 +9,15 @@ def send_values():
     json['metodo_pesquisa'] = dict()
     json['metodo_pesquisa']['metodo'] = met_pesq.metodo.get()
     json['metodo_pesquisa']['valor']  = met_pesq.valor.get()
-    json['posicao'] = posicoes.posicoes
+    json['posicao'] = posicoes.posicao.get()
     json['idade']   = idade_nac_reputacao.inputs['IDADE'].get()
     json['nacionalidade']           = idade_nac_reputacao.inputs['NACIONALIDADE'].get()
     json['reputacao_internacional'] = idade_nac_reputacao.inputs['REPUTACAO'].get()
     json['ligas'] = liga.ligas
     json['combo'] = combo_start.valor.get()
-    Ctrl.Dataframe.send_json(json)
+    print(json)
+    exit(0)
+    Ctrl.Dataframe(json)
 
 ############################################################################
 class Root():
@@ -137,9 +139,8 @@ class Metodo_Pesquisa():
 class Posicao():
     def __init__ (self, root):
         self.height = prm.H*0.30
-        self.posicoes = {'GK': IntVar(), 'CB': IntVar(), 'RB': IntVar(), 'LB': IntVar(), 
-        'CDM': IntVar(), 'CM': IntVar(), 'RM': IntVar(), 'LM': IntVar(), 'CAM': IntVar(), 
-        'RW': IntVar(), 'LW': IntVar(), 'CF': IntVar(), 'ST': IntVar()}
+        self.posicao = StringVar()
+        self.posicao.set('GK')
 
         self.frame = Frame(root, height = self.height)
 
@@ -170,9 +171,9 @@ class Posicao():
         return Label(self.frame, bg = prm.COLOR_BG)
     
     def chkbutton(self, root, pos, cod):
-        return Checkbutton(root, text=pos, font = prm.FONT_OP,
-        bg = prm.COLOR_BG, activebackground = prm.COLOR_BG, fg= prm.COLOR_FONT,
-        anchor = W, variable=self.posicoes[cod], onvalue = 1, offvalue = 0)
+        return Radiobutton(root, text = pos, font = prm.FONT_OP,
+        bg = prm.COLOR_BG, fg= prm.COLOR_FONT, activebackground = prm.COLOR_BG,
+        anchor = W, value = cod, variable = self.posicao)
 
     def to_bool(self):
         try:

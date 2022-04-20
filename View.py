@@ -16,7 +16,6 @@ def send_values():
     json['ligas'] = liga.ligas
     json['combo'] = combo_start.valor.get()
     print(json)
-    exit(0)
     Ctrl.Dataframe(json)
 
 ############################################################################
@@ -231,7 +230,7 @@ class Idade_Nacion_Reputacao():
         self.titleboxN    = self.title('NACIONALIDADE', 180)
         self.titleboxR    = self.title('REPUTAÇÃO INTERNACIONAL', 260)
 
-        self.opt_menuI    = self.opt_menu('IDADE',  ['Todos', 'Menor que 21', '22 - 27', '28 - 33', '34 - 39', 'Maior que 40'])
+        self.opt_menuI    = self.opt_menu('IDADE',  ['Todos', '<= 21', '22 - 27', '28 - 33', '34 - 39', '>= 40'])
         self.opt_menuN    = self.opt_menu('NACIONALIDADE', ['Todos']+self.paises)
         self.opt_menuR    = self.opt_menu('REPUTACAO',  ['Todos']+self.reputacao)
 

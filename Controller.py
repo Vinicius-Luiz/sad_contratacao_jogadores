@@ -1,4 +1,5 @@
 import Model as Mdl
+import pandas as pd
 
 class Knapsack_Problem():
     def __init__(self, totalCaixa):
@@ -64,8 +65,8 @@ class Dataframe():
         self.ligas = json['ligas']
         self.qtd_combo = json['combo']
         
-        self.df_filter = self.exec_filter()
-        
+        self.df = self.get_df()
+        self.exec_filter()
         self.exec_combo()
         '''
         {'metodo_pesquisa': {'metodo': 1, 'valor': 151000}, 
@@ -78,35 +79,51 @@ class Dataframe():
         return Mdl.df()
 
     def exec_filter(self):
-        df = self.get_df()
-        df = self.filtrar_posicao()
-        df = self.filtrar_idade()
-        df = self.filtrar_nacionalidade()
-        df = self.filtrar_reputacao()
-        df = self.filtrar_ligas()
-        return df
+        self.filtrar_posicao()
+        self.filtrar_idade()
+        self.filtrar_nacionalidade()
+        self.filtrar_reputacao()
+        self.filtrar_ligas()
         
     def filtrar_posicao(self):
-        ####### MODELO DE TODOS OS FILTROS SERÁ ESSE #######
-        # filtro = df[df['player_positions'].str.contains('RWB', na=False)]
-        pass
+        self.df = self.df[self.df['player_positions'].str.contains(self.posicao, na=False)]
 
     def filtrar_idade(self):
-        pass
+        if self.idade == '<= 21':
+            self.df = self.df[self.df['age'] <= 21 ]
+        elif self.idade == '22 - 27':
+            self.df = self.df[(self.df['age'] >= 22) & (self.df['age'] <= 27)]
+        elif self.idade == '28 - 33':
+            self.df = self.df[(self.df['age'] >= 28) & (self.df['age'] <= 33)]
+        elif self.idade == '34 - 39':
+            self.df = self.df[(self.df['age'] >= 34) & (self.df['age'] <= 39)]
+        elif self.idade == '>= 40':
+            self.df = self.df[self.df['age'] >= 40 ]
 
     def filtrar_nacionalidade(self):
-        pass
+        if self.nacionalidade != 'Todos':
+            self.df = self.df[self.df['nationality_name'] == self.nacionalidade]
 
     def filtrar_reputacao(self):
-        pass
+        if self.reputacao_internacional == 'Muito alta':
+            self.df = self.df[self.df['international_reputation'] == 5]
+        elif self.reputacao_internacional == 'Alta':
+            self.df = self.df[self.df['international_reputation'] == 4]
+        elif self.reputacao_internacional == 'Média':
+            self.df = self.df[self.df['international_reputation'] == 3]
+        elif self.reputacao_internacional == 'Baixa':
+            self.df = self.df[self.df['international_reputation'] == 2]
+        elif self.reputacao_internacional == 'Muito baixa':
+            self.df = self.df[self.df['international_reputation'] == 1]
 
     def filtrar_ligas(self):
-        pass
+        if 'Todos' not in self.ligas:
+            df_temp = self.df[self.df['league_name'] == 'XXX']
+            for liga in self.ligas:
+                df_temp = pd.concat([self.df[self.df['league_name'] == liga], df_temp])
 
-    def filtrar_result_jogadores(self, result):
-        #após sabermos a melhor combinação, devemos filtrar os jogadores retornados pelo ID dele
-        pass
-
+            self.df = df_temp
+    
     def jogadores_to_csv(self):
         # saida deve ser ['13052000;8;57', 'id_jogador;valor;pontuacao']
         if self.metodo == 1:
@@ -115,12 +132,16 @@ class Dataframe():
             pass
         elif self.metodo == 3:
             pass
-
+        
     def exec_combo(self):
         jogadores = self.jogadores_to_csv()
         algorithm = Knapsack_Problem(self.valor)
         result    = algorithm.run(jogadores)
         self.export_excel(result)
+
+    def filtrar_result_jogadores(self, result):
+        #após sabermos a melhor combinação, devemos filtrar os jogadores retornados pelo ID dele
+        pass
     
     def export_excel(self, result):
         pass

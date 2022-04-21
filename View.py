@@ -15,7 +15,6 @@ def send_values():
     json['reputacao_internacional'] = idade_nac_reputacao.inputs['REPUTACAO'].get()
     json['ligas'] = liga.ligas
     json['combo'] = combo_start.valor.get()
-    print(json)
     Ctrl.Dataframe(json)
 
 ############################################################################

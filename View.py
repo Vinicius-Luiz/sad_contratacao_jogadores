@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 import Controller as Ctrl
 import Params as prm
 
@@ -16,6 +17,7 @@ def send_values():
     json['ligas'] = liga.ligas
     json['combo'] = combo_start.valor.get()
     Ctrl.Dataframe(json)
+    messagebox.showinfo("Relatório", "O relatório foi concluído com sucesso!")
 
 ############################################################################
 class Root():

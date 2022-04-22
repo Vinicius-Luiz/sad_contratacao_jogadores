@@ -294,6 +294,6 @@ class Dataframe():
         self.df_results.append(df_filtered)
     
     def export_excel(self):
-        with pd.ExcelWriter(f'relatorio_{self.posicao}.xlsx') as writer: 
+        with pd.ExcelWriter(f'relatorios/relatorio_{self.posicao}.xlsx') as writer: 
             for idx, df in enumerate(self.df_results):
                 df.to_excel(writer, sheet_name=f'Combo-{idx+1}', index = False)

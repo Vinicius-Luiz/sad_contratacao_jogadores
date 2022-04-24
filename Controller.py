@@ -1,5 +1,7 @@
 import Model as Mdl
 import pandas as pd
+import numpy as np
+import time
 
 class Knapsack_Problem():
     def __init__(self, totalCaixa):
@@ -21,6 +23,7 @@ class Knapsack_Problem():
             print(matriz[i])#, j[i][0])
 
     def melhorCombo(self, tJ, tC, j):
+        inicio = time.time()
         matriz = [[0]*(tC+1)]
         for i in range(tJ):
             linhaTemp = [0]*(tC+1)
@@ -49,23 +52,14 @@ class Knapsack_Problem():
                  melhorValor += j[linha][1]
                  melhorPontuacao += j[linha][2]
                  iColunaTemp -= j[linha][1]
-        
-        #print(melhorPontuacao)
-        #print(melhorValor)
-        #print(melhoresJogadores)
+        fim = time.time()
+        print(fim - inicio)
         return melhoresJogadores
 class Dataframe():
     def __init__(self, json):
         self.df_results = []
-        self.df = self.get_df_input()
-        
-        if json['metodo_pesquisa']['valor'] >= 10**6:
-            self.valor           = json['metodo_pesquisa']['valor']//100
-            self.df['value_eur'] = self.df['value_eur']//100
-            self.df['wage_eur']  = self.df['wage_eur']//100
-            self.df['release_clause_eur'] = self.df['release_clause_eur']//100
-        else:
-            self.valor   = json['metodo_pesquisa']['valor']
+        self.df  = self.get_df_input()
+
         self.metodo  = json['metodo_pesquisa']['metodo']
         self.posicao = json['posicao']
         self.idade   = json['idade']
@@ -73,12 +67,54 @@ class Dataframe():
         self.reputacao_internacional = json['reputacao_internacional']
         self.ligas                   = json['ligas']
         self.qtd_combo               = json['combo']
+
+        self.optimized, self.div = self.set_valor_optimized(json)
+
+        self.valor           = json['metodo_pesquisa']['valor']//self.div
+        self.df['value_eur'] = self.df['value_eur']//self.div
+        self.df['wage_eur']  = self.df['wage_eur']//self.div
+        self.df['release_clause_eur'] = self.df['release_clause_eur']//self.div
             
         self.main()
+    
+    def set_valor_optimized(self, json):
+        if self.metodo == 1:
+            if json['metodo_pesquisa']['valor'] >= 10**7:
+                return True, 1000
+            elif json['metodo_pesquisa']['valor'] >= 10**6:
+                return True, 100
+            elif json['metodo_pesquisa']['valor'] >= 10**5:
+                return False, 10
+            else:
+                return False, 1
+        elif self.metodo == 2:
+            if json['metodo_pesquisa']['valor'] >= 10**6:
+                return True, 100
+            elif json['metodo_pesquisa']['valor'] >= 10**5:
+                return True, 10
+            elif json['metodo_pesquisa']['valor'] >= 10**4:
+                return True, 1
+            else:
+                return False, 1
+        elif self.metodo == 3:
+            if json['metodo_pesquisa']['valor'] >= 10**9:
+                return True, 1000000
+            elif json['metodo_pesquisa']['valor'] >= 10**8:
+                return True, 100000
+            elif json['metodo_pesquisa']['valor'] >= 10**7:
+                return False, 1000
+            elif json['metodo_pesquisa']['valor'] >= 10**6:
+                return False, 100
+            elif json['metodo_pesquisa']['valor'] >= 10**5:
+                return False, 10
+            else:
+                return False, 1
     
     def main(self):
         self.exec_filter()
         self.calculate_points()
+        if self.optimized:
+            self.exec_filter('best')
         for i in range(self.qtd_combo):        
             if i >= self.qtd_combo/2:
                 self.exec_filter('best')
@@ -102,7 +138,7 @@ class Dataframe():
         self.filtrar_ligas()
         
     def filtrar_points(self):
-        if self.df[self.df['points'] >= 75].shape[0] > 10:
+        if self.df[self.df['points'] >= 75].shape[0] > 20:
             self.df = self.df[self.df['points'] >= 75]
     
     def filtrar_posicao(self):
@@ -145,22 +181,23 @@ class Dataframe():
     
     def calculate_points(self):
         if self.posicao == 'GK':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['movement_agility']*4)+(self.df['movement_reactions']*6)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['movement_agility']*4)+(self.df['movement_reactions']*6)+
                     (self.df['movement_balance']*4)+(self.df['power_shot_power']*5)+(self.df['power_jumping']*6)+(self.df['power_strength']*6)+
                     (self.df['mentality_vision']*4)+(self.df['mentality_composure']*5)+(self.df['goalkeeping_diving']*7)+(self.df['goalkeeping_handling']*6)+
                     (self.df['goalkeeping_kicking']*6)+(self.df['goalkeeping_positioning']*6)+(self.df['goalkeeping_reflexes']*7)+(self.df['goalkeeping_speed']*4)+
-                    (self.df['gk']*7))/102
+                    (self.df['gk']*7))/102, 5)
+        
         elif self.posicao == 'CB':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.2)+(self.df['pace']*6)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.2)+(self.df['pace']*6)+
                     (self.df['shooting']*4)+(self.df['passing']*5)+(self.df['dribbling']*6)+(self.df['defending']*7)+(self.df['physic']*7)+
                     (self.df['skill_ball_control']*6)+(self.df['movement_acceleration']*6)+(self.df['movement_sprint_speed']*6)+(self.df['movement_agility']*6)+(self.df['movement_reactions']*6)+
                     (self.df['movement_balance']*6)+(self.df['power_jumping']*7)+(self.df['power_stamina']*7)+(self.df['power_strength']*8)+(self.df['mentality_aggression']*7)+
                     (self.df['mentality_interceptions']*7)+(self.df['mentality_positioning']*4)+(self.df['mentality_vision']*5)+(self.df['mentality_composure']*6)+(self.df['defending_marking_awareness']*7)+
                     (self.df['defending_standing_tackle']*7)+(self.df['defending_sliding_tackle']*6)+(self.df['lcb']*7)+(self.df['cb']*7)+(self.df['rcb']*7)
-                    )/182.5    
+                    )/182.5, 5)
             
         elif self.posicao == 'RB':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
                     (self.df['shooting']*5)+(self.df['passing']*6)+(self.df['dribbling']*6)+(self.df['defending']*6)+(self.df['physic']*7)+
                     (self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*5)+(self.df['attacking_heading_accuracy']*6)+(self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*4)+
                     (self.df['skill_dribbling']*6)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*4)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*6)+
@@ -169,10 +206,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*7)+(self.df['mentality_interceptions']*6)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*5)+
                     (self.df['mentality_composure']*6)+(self.df['defending_marking_awareness']*6)+(self.df['defending_standing_tackle']*6)+(self.df['defending_sliding_tackle']*6)+(self.df['rwb']*7)+
                     (self.df['rb']*7)
-                    )/245.6
+                    )/245.6, 5)
 
         elif self.posicao == 'LB':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
                     (self.df['shooting']*5)+(self.df['passing']*6)+(self.df['dribbling']*6)+(self.df['defending']*6)+(self.df['physic']*7)+
                     (self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*5)+(self.df['attacking_heading_accuracy']*6)+(self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*4)+
                     (self.df['skill_dribbling']*6)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*5)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*6)+
@@ -181,10 +218,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*7)+(self.df['mentality_interceptions']*6)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*5)+
                     (self.df['mentality_composure']*6)+(self.df['defending_marking_awareness']*6)+(self.df['defending_standing_tackle']*6)+(self.df['defending_sliding_tackle']*6)+(self.df['rwb']*7)+
                     (self.df['rb']*7)
-                    )/246.6
+                    )/246.6, 5)
             
         elif self.posicao == 'CDM':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*6)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*6)+
                     (self.df['shooting']*6)+(self.df['passing']*6)+(self.df['dribbling']*6)+(self.df['defending']*6)+(self.df['physic']*7)+
                     (self.df['skill_dribbling']*6)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*7)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*6)+(self.df['movement_sprint_speed']*6)+(self.df['movement_agility']*7)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*7)+
@@ -192,10 +229,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*7)+(self.df['mentality_interceptions']*6)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*5)+
                     (self.df['mentality_composure']*6)+(self.df['defending_marking_awareness']*6)+(self.df['defending_standing_tackle']*7)+(self.df['defending_marking_awareness']*6)+
                     (self.df['cdm']*7)+(self.df['ldm']*7)+(self.df['rdm']*7)
-                    )/230.6
+                    )/230.6, 5)
 
         elif self.posicao == 'CM':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
                     (self.df['shooting']*6)+(self.df['passing']*6)+(self.df['dribbling']*7)+(self.df['defending']*6)+(self.df['physic']*7)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*7)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*7)+(self.df['movement_sprint_speed']*7)+(self.df['movement_agility']*7)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*7)+
@@ -203,10 +240,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*7)+(self.df['mentality_interceptions']*6)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*7)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*7)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*6)+(self.df['attacking_heading_accuracy']*6)+
                     (self.df['attacking_short_passing']*7)+(self.df['attacking_volleys']*5)+(self.df['cm']*7)+(self.df['lcm']*7)+(self.df['rcm']*7)
-                    )/249.6
+                    )/249.6, 5)
 
         elif self.posicao == 'RM':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
                     (self.df['shooting']*6)+(self.df['passing']*6)+(self.df['dribbling']*7)+(self.df['defending']*5)+(self.df['physic']*6)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*8)+(self.df['movement_sprint_speed']*8)+(self.df['movement_agility']*8)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*8)+
@@ -214,10 +251,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*5)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*6)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*6)+(self.df['attacking_heading_accuracy']*5)+
                     (self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*6)+(self.df['rm']*7)
-                    )/231.7
+                    )/231.7, 5)
 
         elif self.posicao == 'LM':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
                     (self.df['shooting']*6)+(self.df['passing']*6)+(self.df['dribbling']*7)+(self.df['defending']*5)+(self.df['physic']*6)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*8)+(self.df['movement_sprint_speed']*8)+(self.df['movement_agility']*8)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*8)+
@@ -225,10 +262,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*5)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*6)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*6)+(self.df['attacking_heading_accuracy']*5)+
                     (self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*6)+(self.df['lm']*7)
-                    )/232.7
+                    )/232.7, 5)
             
         elif self.posicao == 'CAM':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.4)+(self.df['pace']*7)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.4)+(self.df['pace']*7)+
                     (self.df['shooting']*5)+(self.df['passing']*7)+(self.df['dribbling']*7)+(self.df['defending']*5)+(self.df['physic']*6)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*7)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*7)+(self.df['movement_sprint_speed']*7)+(self.df['movement_agility']*8)+(self.df['movement_reactions']*7)+(self.df['movement_balance']*8)+
@@ -236,10 +273,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*5)+(self.df['mentality_positioning']*7)+(self.df['mentality_vision']*7)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*7)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*6)+(self.df['attacking_heading_accuracy']*5)+
                     (self.df['attacking_short_passing']*7)+(self.df['attacking_volleys']*6)+(self.df['cam']*7)+(self.df['lam']*7)+(self.df['ram']*7)
-                    )/248.8
+                    )/248.8, 5)
             
         elif self.posicao == 'RW':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
                     (self.df['shooting']*6)+(self.df['passing']*6)+(self.df['dribbling']*6)+(self.df['physic']*6)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*5)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*8)+(self.df['movement_sprint_speed']*8)+(self.df['movement_agility']*8)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*7)+
@@ -247,10 +284,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*5)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*6)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*6)+(self.df['attacking_heading_accuracy']*5)+
                     (self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*6)+(self.df['rw']*6)
-                    )/222.7
+                    )/222.7, 5)
             
         elif self.posicao == 'LW':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.3)+(self.df['skill_moves']*0.3)+(self.df['pace']*8)+
                     (self.df['shooting']*6)+(self.df['passing']*6)+(self.df['dribbling']*7)+(self.df['physic']*6)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*8)+(self.df['movement_sprint_speed']*8)+(self.df['movement_agility']*8)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*7)+
@@ -258,10 +295,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*5)+(self.df['mentality_positioning']*6)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*6)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*6)+(self.df['attacking_heading_accuracy']*6)+
                     (self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*6)+(self.df['lw']*6)
-                    )/225.6
+                    )/225.6, 5)
 
         elif self.posicao == 'CF':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.4)+(self.df['pace']*8)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.4)+(self.df['pace']*8)+
                     (self.df['shooting']*7)+(self.df['passing']*7)+(self.df['dribbling']*7)+(self.df['physic']*6)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*7)+(self.df['skill_fk_accuracy']*6)+(self.df['skill_long_passing']*6)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*8)+(self.df['movement_sprint_speed']*8)+(self.df['movement_agility']*8)+(self.df['movement_reactions']*7)+(self.df['movement_balance']*8)+
@@ -269,10 +306,10 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*4)+(self.df['mentality_positioning']*7)+(self.df['mentality_vision']*7)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*7)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*7)+(self.df['attacking_heading_accuracy']*6)+
                     (self.df['attacking_short_passing']*7)+(self.df['attacking_volleys']*6)+(self.df['lf']*7)+(self.df['cf']*7)+(self.df['rf']*7)
-                    )/250.8
+                    )/250.8, 5)
             
         elif self.posicao == 'ST':
-            self.df['points'] = ((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
+            self.df['points'] = round(((self.df['overall']*10)+(self.df['potential']*9)+(self.df['weak_foot']*0.4)+(self.df['skill_moves']*0.3)+(self.df['pace']*7)+
                     (self.df['shooting']*7)+(self.df['passing']*6)+(self.df['dribbling']*7)+(self.df['physic']*7)+
                     (self.df['skill_dribbling']*7)+(self.df['skill_curve']*6)+(self.df['skill_fk_accuracy']*5)+(self.df['skill_long_passing']*5)+(self.df['skill_ball_control']*7)+
                     (self.df['movement_acceleration']*7)+(self.df['movement_sprint_speed']*7)+(self.df['movement_agility']*7)+(self.df['movement_reactions']*6)+(self.df['movement_balance']*7)+
@@ -280,7 +317,7 @@ class Dataframe():
                     (self.df['mentality_aggression']*6)+(self.df['mentality_interceptions']*3)+(self.df['mentality_positioning']*7)+(self.df['mentality_vision']*6)+(self.df['mentality_penalties']*6)+
                     (self.df['mentality_composure']*6)+(self.df['attacking_crossing']*6)+(self.df['attacking_finishing']*7)+(self.df['attacking_heading_accuracy']*6)+
                     (self.df['attacking_short_passing']*6)+(self.df['attacking_volleys']*6)+(self.df['ls']*7)+(self.df['st']*7)+(self.df['rs']*7)
-                    )/237.7
+                    )/237.7, 5)
 
     def jogadores_to_csv(self):
         # saida deve ser ['13052000;8;57', 'id_jogador;valor;pontuacao']

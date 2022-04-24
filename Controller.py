@@ -1,6 +1,5 @@
 import Model as Mdl
 import pandas as pd
-import numpy as np
 import time
 
 class Knapsack_Problem():
@@ -55,6 +54,7 @@ class Knapsack_Problem():
         fim = time.time()
         print(fim - inicio)
         return melhoresJogadores
+    
 class Dataframe():
     def __init__(self, json):
         self.df_results = []
@@ -68,7 +68,7 @@ class Dataframe():
         self.ligas                   = json['ligas']
         self.qtd_combo               = json['combo']
 
-        self.optimized, self.div = self.set_valor_optimized(json)
+        self.optimized, self.div, self.value_filter_points = self.set_valor_optimized(json)
 
         self.valor           = json['metodo_pesquisa']['valor']//self.div
         self.df['value_eur'] = self.df['value_eur']//self.div
@@ -78,37 +78,40 @@ class Dataframe():
         self.main()
     
     def set_valor_optimized(self, json):
+        '''return necessita_otimização | dividendo p/ diminuir tam da matriz | filtro points'''
         if self.metodo == 1:
             if json['metodo_pesquisa']['valor'] >= 10**7:
-                return True, 1000
+                return True, 1000, 80
+            elif json['metodo_pesquisa']['valor'] >= 10*(10**6):
+                return True, 100, 75
             elif json['metodo_pesquisa']['valor'] >= 10**6:
-                return True, 100
+                return True, 100, 72
             elif json['metodo_pesquisa']['valor'] >= 10**5:
-                return False, 10
+                return False, 10, 70
             else:
-                return False, 1
+                return False, 1, 70
         elif self.metodo == 2:
             if json['metodo_pesquisa']['valor'] >= 10**6:
-                return True, 100
+                return True, 100, 80
             elif json['metodo_pesquisa']['valor'] >= 10**5:
-                return True, 10
+                return True, 10, 75
             elif json['metodo_pesquisa']['valor'] >= 10**4:
-                return True, 1
+                return True, 1, 72
             else:
-                return False, 1
+                return False, 1, 70
         elif self.metodo == 3:
             if json['metodo_pesquisa']['valor'] >= 10**9:
-                return True, 1000000
+                return True, 1000000, 80
             elif json['metodo_pesquisa']['valor'] >= 10**8:
-                return True, 100000
+                return True, 100000, 80
             elif json['metodo_pesquisa']['valor'] >= 10**7:
-                return False, 1000
+                return False, 1000, 75
             elif json['metodo_pesquisa']['valor'] >= 10**6:
-                return False, 100
+                return False, 100, 72
             elif json['metodo_pesquisa']['valor'] >= 10**5:
-                return False, 10
+                return False, 10, 70
             else:
-                return False, 1
+                return False, 1, 70
     
     def main(self):
         self.exec_filter()
@@ -138,8 +141,8 @@ class Dataframe():
         self.filtrar_ligas()
         
     def filtrar_points(self):
-        if self.df[self.df['points'] >= 75].shape[0] > 20:
-            self.df = self.df[self.df['points'] >= 75]
+        if self.df[self.df['points'] >= self.value_filter_points].shape[0] > 20:
+            self.df = self.df[self.df['points'] >= self.value_filter_points]
     
     def filtrar_posicao(self):
         self.df = self.df[self.df['player_positions'].str.contains(self.posicao, na=False)]

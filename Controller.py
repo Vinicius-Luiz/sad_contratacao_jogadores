@@ -56,23 +56,32 @@ class Knapsack_Problem():
         return melhoresJogadores
 class Dataframe():
     def __init__(self, json):
-        self.metodo = json['metodo_pesquisa']['metodo']
-        self.valor = json['metodo_pesquisa']['valor']//100
-        self.posicao = json['posicao']
-        self.idade = json['idade']
-        self.nacionalidade = json['nacionalidade']
-        self.reputacao_internacional = json['reputacao_internacional']
-        self.ligas = json['ligas']
-        self.qtd_combo = json['combo']
-        
         self.df_results = []
         self.df = self.get_df_input()
+        
+        if json['metodo_pesquisa']['valor'] >= 10**6:
+            self.valor           = json['metodo_pesquisa']['valor']//100
+            self.df['value_eur'] = self.df['value_eur']//100
+            self.df['wage_eur']  = self.df['wage_eur']//100
+            self.df['release_clause_eur'] = self.df['release_clause_eur']//100
+        else:
+            self.valor   = json['metodo_pesquisa']['valor']
+        self.metodo  = json['metodo_pesquisa']['metodo']
+        self.posicao = json['posicao']
+        self.idade   = json['idade']
+        self.nacionalidade           = json['nacionalidade']
+        self.reputacao_internacional = json['reputacao_internacional']
+        self.ligas                   = json['ligas']
+        self.qtd_combo               = json['combo']
+            
         self.main()
     
     def main(self):
         self.exec_filter()
         self.calculate_points()
         for i in range(self.qtd_combo):        
+            if i >= self.qtd_combo/2:
+                self.exec_filter('best')
             self.exec_combo()
         self.export_excel()
     
@@ -82,13 +91,20 @@ class Dataframe():
     def get_df_output(self):
         return Mdl.df_output()
 
-    def exec_filter(self):
+    def exec_filter(self, metodo = 'auto'):
+        if metodo == 'best':
+            self.filtrar_points()
+            return
         self.filtrar_posicao()
         self.filtrar_idade()
         self.filtrar_nacionalidade()
         self.filtrar_reputacao()
         self.filtrar_ligas()
         
+    def filtrar_points(self):
+        if self.df[self.df['points'] >= 75].shape[0] > 10:
+            self.df = self.df[self.df['points'] >= 75]
+    
     def filtrar_posicao(self):
         self.df = self.df[self.df['player_positions'].str.contains(self.posicao, na=False)]
 

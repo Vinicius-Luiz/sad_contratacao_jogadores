@@ -370,8 +370,8 @@ class Combinacoes():
         self.frame.pack(fill=X, pady= prm.PADY, padx = prm.PADX)
 
 
-root                = Root('Busca de Jogadores')
-title               = Title(root.root, 'ADVANCED PLAYER SEARCH')
+root                = Root('TREM')
+title               = Title(root.root, "Transfer Research Episkyros' Mechanism".upper())
 met_pesq            = Metodo_Pesquisa(root.root)
 posicoes            = Posicao(root.root)
 idade_nac_reputacao = Idade_Nacion_Reputacao(root.root)
